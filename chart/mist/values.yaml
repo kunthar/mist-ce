@@ -709,7 +709,7 @@ deployment:
 # user will be created with the specified email,password and api token.
 # An Organization will also be created with the user as the only owner.
 userCreation:
-  enabled: false
+  enabled: true
   mail: "example@example.com"
   password: { randAlphaNum 20 | quote }
   apiToken: { randAlphaNum 64 | lower | quote }
