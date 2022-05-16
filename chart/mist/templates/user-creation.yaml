@@ -1,0 +1,47 @@
+{{- if .Values.userCreation.enabled -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "chart.fullname" . }}-user-creation
+  labels:
+    app: user-creation
+    chart: {{ include "chart.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        app: user-creation
+        release: {{ .Release.Name }}
+    spec:
+      imagePullSecrets:
+{{ toYaml .Values.image.secrets | indent 8 }}
+      containers:
+      - args:
+        - bin/adduser
+        - --admin
+        - {{ .Values.userCreation.mail }}
+        - --password
+        - {{ .Values.userCreation.password }}
+        - --apitoken
+        - {{ .Values.userCreation.apiToken }}
+        image: {{ .Values.image.registry }}/api:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        name: user-creation
+        resources: {}
+        volumeMounts:
+        - name: {{ .Values.productShortName }}-config
+          mountPath: /etc/{{ .Values.productShortName }}/settings/settings.py
+          subPath: settings.py
+      volumes:
+      - name: {{ .Values.productShortName }}-config
+        configMap:
+          name: {{ include "chart.fullname" . }}-{{ .Values.productShortName }}
+      restartPolicy: Never
+{{- end }}
